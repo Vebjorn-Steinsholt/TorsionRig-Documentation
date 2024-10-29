@@ -1,0 +1,15 @@
+
+\begin{lstlisting}[language=ST,caption={Setting Motor Status}]
+IF 
+    "Data_block_Motor1_Ctrl_Status".Structure_Drive_2.Sts_MC_Error 
+OR 
+NOT  
+    ("Data_block_Motor1_Ctrl_Status".Structure_Drive_2.Enable_MC_Power) 
+    THEN
+        "dbHoldingRegisters".MotorRegisters[14] := 0;
+ELSE
+    "dbHoldingRegisters".MotorRegisters[14] := 1;
+END_IF;
+
+\end{lstlisting}
+
