@@ -169,13 +169,51 @@ In this section the different elements of the program will be described if a cha
 \end{itemize}
 
 \subsection{PLC programming}
-The software on the PLC side is primarily written in \acrshort{fbd}, but also some \acrshort{stl}. During operation the Main Program Sweep continuously cycles through 3 main function blocks FC\_Drive 1, FC\_Drive 2 and MB\_Server where the first two control drives 1 and 2 respectively, and MB is the Modbus server that the client PC communicates with to send the different values over. An overview of this Organization Block(OB) is provided in figure \ref{fig:OB1}. The Modbus server block communicates with the client pc and receives data. This data is stored in a Data Block as shown in \figref{fig:dbHoldReg}. The two function blocks access the register mostly independently, but some variables are shared:
+The software on the \acrshort{plc} which is a  \Gls{s71500}. side is primarily written in \acrshort{fbd}, but also some \acrshort{stl}. During operation the Main Program Sweep continuously cycles through 3 main function blocks FC\_Drive 1, FC\_Drive 2 and MB\_Server where the first two control drives 1 and 2 respectively, and MB is the Modbus server that the client PC communicates with to send the different values over. An overview of this Organization Block(OB) is provided in figure \ref{fig:OB1}. The Modbus server block communicates with the client pc and receives data. This data is stored in a Data Block as shown in \figref{fig:dbHoldReg}. The two function blocks access the register mostly independently, but some variables are shared such as:
 \begin{itemize}
     \item MotorsOn
     \item Reset
     \item MotorsOff
 \end{itemize}
-
+All of these are set from the client. 
+The non-shared variables are:
+\begin{multicols}{2}
+Motor 1
+\begin{itemize}
+    \item StartMotor1
+    \item SetSpeed1Msb
+    \item SetSpeed1lsb
+    \item ReadSpeed1Msb
+    \item ReadSpeed1lsb
+    \item Motor1Ok
+\end{itemize}
+Motor 2 
+\begin{itemize}
+    \item StartMotor2
+    \item SetSpeed2Msb
+    \item SetSpeed2lsb
+    \item ReadSpeed2Msb
+    \item ReadSpeed2lsb
+    \item Motor2Ok
+\end{itemize}
+\end{multicols}
+For both cases the first 3 are set on the client side and the last 3 are set on the PLC
+The following is an explanation of the different blocks in FC\_Drive\_1 the case of FC\_Drive\_2 is identical with the appropirate change of variables. 
+\begin{enumerate}[label= \textbf{Network \arabic*:}]
+    \item \textbf{ Motor\_1\_MC\_Power} If Enable\_MC\_Power is \true the motor is powered on, if there is an error write it to Sts\_MC\_Error.
+    \item \textbf{ Motor\_1\_MC\_Reset} If Execute\_MC\_Reset is \true reset the motor.
+    \item \textbf{ Motor\_1\_MC\_Halt} If Execute\_MC\_Halt is \true halt the motor.
+    \item \textbf{ Motor\_1\_MC\_jog} If Execute\_Jog\_Forward is \true move the motor forward with the speed set by Sp\_lr\_Velocity. 
+    
+    If Execute\_Jog\_Backward\footnote{unused in the program }is \true move the motor backward with the speed set by Sp\_lr\_Velocity.
+    \item \textbf{ Motor\_1\_MoveVelocity} Moves motor if Execute is \true, One can set Velocity, Acceleration, Deceleration, Jerk and Direction as needed\footnote{This was used in early development of the program, but changing velocity during operation was complicated and MC\_Jog was used instead}.  
+    \item \textbf{Motor\_1\_Home}\footnote{Since we are not doing position control, we don't care where the motor starts. The function is left in the program for convenance and change of features in the future.} If Execute\_MC\_Home is \true then execute homing of the motor.
+    \item \textbf{Motor\_1\_Stop}\footnote{Unused in the current program, might be implemented as Emergency Stop in the future.} if Execute\_MC\_Stop is \true stop the motor, this differs from MC\_Halt in that the axis is locked meaning that even if it receives new motion commands it will not move.
+    \item \textbf{Motor 1 actual velocity} Reads the velocity value of the positioning axis and moves it to the lr.\_Actual\_Velocity variable.
+    \item \textbf{Motor 1 Actual Torque}\footnote{Unused in the current program} Reads the torque value of the positioning axis and moves it to the lr.\_Actual\_Torque variable.
+    \item \textbf{Motor 1 Torque Range}\footnote{This requires the setup of telegram 750, which I believe that the \Gls{s71500} in use is not compatible with. This function block is therefore unused.} If Enable\_Torque\_Reduction is \true it limits the drive to the ranges set by Sp\_lr\_Torque\_Lower\_Limit and Sp\_lr\_Torque\_Upper\_Limit. 
+\end{enumerate}
+\clearpage
 \appendix
 
 \addcontentsline{toc}{section}{Glossary}
@@ -229,6 +267,10 @@ The software on the PLC side is primarily written in \acrshort{fbd}, but also so
 \newglossaryentry{modbus}{
 name ={modbus},
 description={is a communication protocol for use with programmable logic controllers}
+}
+\newglossaryentry{s71500}{
+name = {S7-1500},
+description={SIMATIC S7-1500, CPU 1511-1 PN, Central processing unit with working memory 150 KB for program and 1 MB for data, 1. interface: PROFINET IRT with 2 port switch, 60 NS bit-performance, SIMATIC memory card necessary. \url{https://mall.industry.siemens.com/mall/en/ww/catalog/product/6es7511-1ak02-0ab0}}
 }
 \section{Structured Text language} 
 \lstlistoflistings
